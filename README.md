@@ -1,81 +1,110 @@
-# FloodCare — Citizen & Staff Edition
-A small bilingual flood-support prototype with a Python server, SQLite persistence, photo attachments, and a separate authenticated staff dashboard.
+# FloodCare — Online Website Source
 
-## Problem and users
-Flood-affected residents need a simple way to explain their situation, preserve damage information, and follow progress. Staff need to see requests together and recognize new SOS reports. FloodCare demonstrates that workflow for residents and staff using fictional information. It is not affiliated with a government agency, does not guarantee rescue, and does not determine or pay compensation.
+**The current website implementation is in [`web-online/`](web-online/).** This source matches the published FloodCare website, including separate citizen/staff portals and the Closed jobs tab.
 
-## Windows easy start
-Extract the ZIP, open FloodCare, then double-click `START_FLOODCARE.bat`. It sets the user-requested classroom password `FCSFight` for this process and opens http://127.0.0.1:8765/staff.html. Keep the terminal open. `START_FLOODCARE_LAN.bat` enables trusted-LAN access. The manual launch below still generates a password unless the environment variable is set. Port 8765 separates this edition from old instances on port 8000. Windows sockets are exclusive to prevent ambiguous duplicate servers.
+If this package is added to an earlier FloodCare repository, standalone Python or HTML files outside `web-online/` belong to the earlier local prototype. Use `web-online/` as the source for the online demonstration. The Android/iPhone source is a separate project and is not the website implementation.
 
-Changing origin or port creates a separate browser-storage area. Old local drafts remain under the original URL. Keep the `data/` folder when updating if submitted server records should remain.
+## Problem
+During flooding, residents may struggle to communicate their location and needs, collect damage information, or find out what happens to their requests. Staff have limited time to organize incoming reports and field visits. Incomplete information and repeated office visits can make an already stressful situation harder.
 
-## Run on one computer
-Python 3.10+ is required. No pip packages or paid services.
+## Intended users
+Flood-affected households and staff demonstrating a possible assistance workflow. The current project is an educational prototype using fictional data, without an operational partnership with a rescue service or government agency.
+
+## What it does
+- Thai/English citizen and staff interfaces.
+- SOS requests, optional device coordinates, contact information and household details.
+- Up to two JPEG/PNG/WebP photos per request, up to 1 MiB each.
+- Damage-information preparation with an illustrative document checklist.
+- Local draft saving before submission, explicit retry and clear server-receipt status.
+- A staff password sign-in protecting request review, photos and status changes.
+- New SOS alerts while the staff page is open and connected; polling every three seconds.
+- Separate **Open jobs / Closed jobs** tabs with counts. Closing retains records, photos and history; choosing another status reopens the job.
+- Citizen status refresh, local JSON export and local-copy deletion.
+
+## Live demonstration
+- Citizen: https://floodcare-nemo8818.gallantbat2.chatgpt.site
+- Staff: https://floodcare-nemo8818.gallantbat2.chatgpt.site/staff.html
+
+The hosted demonstration requires site-level access permission. A public GitHub repository does not automatically grant access to the private live demo. The staff password is a separate application-level check after site access. No production secrets, request data, uploaded photos or staff sessions are included in this source package.
+
+## Published version and verification
+This export matches published website **version 2**, source commit:
+
+`69b13a4108a744084f8729939f48478643dadb24`
+
+All 129 original source files in `web-online/` were compared byte-for-byte against that commit. [`SOURCE_VERSION.json`](SOURCE_VERSION.json) lists SHA-256 checksums. The handover README and upload guide sit outside the original source directory, so the deployed source files remain unchanged. This record describes the source version, not a copy of the live database or runtime configuration.
+
+## How to run locally
+Install Node.js 22.13 or newer, then open a terminal in `web-online/`.
+
+1. Install the locked dependencies:
 
 ```sh
-python run.py
+npm ci
 ```
-Windows can use `py run.py`; macOS can use `python3 run.py`.
 
-- Citizen page: **http://127.0.0.1:8765/** (`index.html`)
-- Separate staff page: **http://127.0.0.1:8765/staff.html** (`staff.html`)
-- A generated staff password is displayed in the server terminal. It changes when the server restarts. An optional `FLOODCARE_STAFF_PASSWORD` environment variable can supply your own password.
-- Keep the terminal running. Ctrl+C stops the server.
-- `python -m http.server` is NOT a substitute: it cannot run these API endpoints.
+2. Create a local, untracked `.dev.vars` file containing a staff password of your choice:
 
-## Two devices on the same trusted Wi-Fi
-Run the server on only one computer:
+```text
+STAFF_PASSWORD=choose-a-local-password
+```
+
+Do not commit that file or actual passwords to GitHub. This local password is independent of the hosted demo's runtime secret.
+
+3. Build the Worker and binding configuration:
 
 ```sh
-py run.py --lan
+npm run build
 ```
-Find that computer's Wi-Fi IPv4 with `ipconfig` on Windows. On the second device open `http://<server-IPv4>:8765/staff.html`. For example, replace the placeholder with the actual IPv4 shown on your computer, not a guessed address. Allow the Python app through the Windows firewall for your private network if prompted. Both devices must reach the same server; guest Wi-Fi/client isolation can prevent this. Mobile data alone will not reach a private LAN address. See `UPDATE_TH.md` for Thai step-by-step guidance.
 
-The local HTTP server is for a classroom demonstration on a trusted network. Do not port-forward it to the public internet or use it with sensitive real incident data. Remote use outside the LAN needs a properly deployed HTTPS backend and stronger operational controls.
+4. Apply the supplied schema migration to the local D1 database:
 
-## Working features
-- Citizen and staff have separate HTML and JavaScript files.
-- Thai/English switch remembered locally on both pages. User-entered text is preserved, not machine translated.
-- Citizen SOS form with contact, household count, optional location and vulnerability flag.
-- Citizen damage form and illustrative document-preparation checklist.
-- Optional JPEG, PNG or WebP attachments: maximum **2 images per request, 1 MiB each**. Previews, local saved copy, server storage and staff viewing are implemented. HEIC and SVG are not accepted; convert phone images to JPEG if necessary. This is incident-photo support, not secure identity-document upload.
-- Requests first save locally; the app then attempts transmission. If it fails, a Retry button remains. Reconnection refreshes existing server statuses but never silently submits unsent local drafts.
-- Server receipt is clearly different from staff acknowledgement or rescue dispatch.
-- Staff password sign-in; server-side authorization protects all-record access and status updates. Citizen requests are scoped to a random browser-held owner token. There are no named citizen accounts or cross-device account recovery.
-- Staff dashboard searches, filters, displays photos, prioritizes SOS, and records status history. Citizen status refreshes every 4 seconds while the page can reach the server.
-- Staff polls every 3 seconds while open and connected. New SOS requests create an in-page alert. Press “Enable sound and request notification permission” to allow optional audio and desktop notifications where supported. Browser throttling, permissions, muted audio and a sleeping device can delay or suppress alerts.
-- A new SOS discovered on first sign-in is also alerted once per browser's seen-ID list. Dismissing an alert does not acknowledge a request. Staff must choose a status separately.
-- Local JSON export and local-copy deletion. Deletion does NOT remove server records; those may reload while connected. Keep exports private.
-
-## Important limits
-**This is not background push.** Closing the staff page, signing out, losing server connectivity, or a sleeping device prevents polling. Desktop notifications and geolocation typically require a secure context; localhost may support them, while an HTTP LAN IP may not. The visible in-page alert is the primary demonstration path. No claim of guaranteed alert delivery is made.
-
-No internet is different from no communication path. Devices on the same Wi-Fi can reach the local server without an internet uplink if local routing works. If no network path exists, requests remain local and must be retried later. SMS drafts still require cellular service and the user must press Send. No delivery confirmation is inferred. Bluetooth mesh and satellite communication are not implemented.
-
-Offline reopening requires a previously cached citizen interface on a browser supporting service workers. localhost supports this in compatible browsers; a plain HTTP LAN IP generally does not. Staff data/API responses are never cached by the service worker. Browser-native validation and date pickers may follow browser language.
-
-The backend checks required fields, type, image size and signatures; it does not perform full image decoding, malware analysis, or EXIF stripping. Do not upload private photos. It uses a single shared staff password and expiring in-memory staff sessions, not production identity management. Citizen ownership is a bearer token stored in the browser. Clearing local storage loses that token. Staff still retain the server copy. Production deployment would need real agency participation, HTTPS, individual staff accounts, auditing, anti-abuse measures, backups and retention procedures.
-
-## Data and source files
-- `index.html`, `app.js`: citizen portal.
-- `staff.html`, `staff.js`: separate authenticated staff portal.
-- `i18n.js`, `style.css`, `sw.js`: shared translations/styles and citizen interface cache.
-- `run.py`: Python HTTP API, validation, authentication and SQLite access.
-- `data/floodcare.sqlite3`: generated at runtime, contains requests and encoded photos. Never upload this folder to a public repository. Keep it when updating code if you want to retain submitted records.
-- `test_server.py`, `test_app.cjs`, `test_staff.cjs`: automated checks.
-- `UPDATE_TH.md`, `SUBMISSION_TH.md`, `MANUAL_TESTS.md`, `VIDEO_SCRIPTS_TH_EN.md`: guidance and recording preparation.
-
-## Checks
 ```sh
-python -m unittest -v test_server.py
-node test_app.cjs
-node test_staff.cjs
-node --check app.js
-node --check staff.js
-node --check i18n.js
-node --check sw.js
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_opposite_santa_claus.sql
 ```
-Node is only needed to run the optional JavaScript checks, not to run the application. Integration tests cover staff sign-in, owner isolation, photo round trip, status updates, idempotent retries, persisted records, unauthorized access, invalid photos, oversized images, origin checks and blocked private-file paths. JavaScript checks cover bilingual rendering, escaping, local storage failure and no false success on network failure. Actual device notifications, sound, location, offline cache and two physical devices still require the manual tests.
 
-## Assignment and publishing
-The assignment asks for a public GitHub repository with README, a demo video of up to 3 minutes, and a separate presentation video of up to 3 minutes. Upload source files, not runtime data. This version needs the Python backend: **GitHub Pages alone cannot provide photo submission, shared requests or staff alerts.** A repository link with local run instructions still meets the code-delivery format shown in the assignment. No public hosting or GitHub repository is created by this ZIP.
+5. Start the built application:
+
+```sh
+npm start
+```
+
+Open the URL printed by Wrangler; append `/staff.html` for staff. Keep the terminal open. Use the local password from `.dev.vars`. Local databases and uploads are separate from hosted data. Both portals must use the same server origin. Python `run.py` is not used by this version.
+
+These are the framework starter's local commands. The exported source was checked for exact correspondence and its API tests rerun; dependency installation and a fresh local Worker build were not repeated for this documentation-only export. The source had already passed the build used for publication.
+
+## Technology and source map
+| File/directory | Purpose |
+| --- | --- |
+| `web-online/lib/assets.ts` | Actual HTML, CSS and browser JavaScript embedded as text assets |
+| `web-online/lib/api-core.ts` | API validation, staff authentication, ownership and status updates |
+| `web-online/lib/api.ts` | Cloudflare runtime bindings |
+| `web-online/app/` | Citizen/staff/asset routes and API entry point |
+| `web-online/db/schema.ts` | Structured record/session schema |
+| `web-online/drizzle/` | Database migrations |
+| `web-online/worker/index.ts` | Production Worker entry |
+| `web-online/tests/api.mts` | API integration tests |
+
+The website uses TypeScript, Vinext, a Cloudflare Worker, D1 and R2. The frontend assets are served through routes from `lib/assets.ts`; an independent root `index.html` is not the current deployment entry point.
+
+## Tests
+With Node.js supporting TypeScript stripping and `node:sqlite` (Node.js 24 was used for the export check):
+
+```sh
+node --experimental-strip-types tests/api.mts
+```
+
+Run from `web-online/`. This tests staff sign-in, request ownership, protected photos, submission, status changes, retry deduplication, validation, sign-out, closing/reopening and retained history. The tests use a temporary in-memory database and object-store substitute, not the live database.
+
+## Deployment
+This source targets a Worker backend with logical bindings `DB` (D1) and `BUCKET` (R2). The original hosted project identity is retained in its hosting manifest. Runtime secrets and platform access policies are managed separately and are not bundled here. Re-deployment needs authorized platform access and provisioned storage; uploading to GitHub alone does not deploy it.
+
+**GitHub Pages alone cannot run this backend.** It will not provide shared requests, protected photos or cross-device staff alerts. Keep the existing live demo for the recorded presentation, and use this repository as its matching source.
+
+## Limits
+This is not a guaranteed emergency channel. No communication path means a request cannot leave the device. The staff page must remain open and connected for polling; no closed-page/background push is implemented. SMS drafts require compatible messaging software, cellular service and a user action to send; the website does not confirm delivery. Location depends on device permission and availability.
+
+There is no rescue dispatch, compensation approval, payment processing or government integration. Browser owner tokens are not a full resident account/recovery system. List APIs return the latest 200 authorized requests. Use fictional data and do not upload identity documents or real bank information.
+
+## Assignment hand-in
+Submit three separate links: this public GitHub repository, a screen-recorded demo up to three minutes, and a presentation video up to three minutes. Record the actual online website described above. Demonstrate submission, photos, staff acknowledgement, closing a job and finding it under Closed jobs. Explain both the intended benefit and current limits. Coding-agent assistance was used as permitted by the supplied assignment.
