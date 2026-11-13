@@ -1,0 +1,6 @@
+__pycache__/
+.DS_Store
+floodcare-records.json
+
+data/
+*.sqlite3
